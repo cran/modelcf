@@ -1,0 +1,13 @@
+Author : Benjamin Auder
+Institution : CEA Cadarache, UPMC Paris 6
+
+This package contains a generic way to build surrogate models of physical computer codes, when inputs are vectors (in R^p) and outputs (continuous) curves from [a,b] to R. The curves are discretized on a finite grid t1,...,tD.
+
+-------------------------------------------
+
+Main function to build a model = fmetam
+
+-------------------------------------------
+
+Main function to validate a model = nfoldcv
+

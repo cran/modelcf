@@ -1,0 +1,60 @@
+/********************************************************************
+ ********************************************************************
+ **
+ ** libhungarian by Cyrill Stachniss, 2004
+ ** -- modified (very) slightly by Benjamin Auder, 2010
+ ** -- (verbose and printing routines deleted, because used in a R package)
+ **
+ **
+ ** Solving the Minimum Assignment Problem using the 
+ ** Hungarian Method.
+ **
+ ** ** This file may be freely copied and distributed! **
+ **
+ ** Parts of the used code was originally provided by the 
+ ** "Stanford GraphGase", but I made changes to this code.
+ ** As asked by  the copyright node of the "Stanford GraphGase", 
+ ** I hereby proclaim that this file are *NOT* part of the
+ ** "Stanford GraphGase" distribution!
+ **
+ ** This file is distributed in the hope that it will be useful,
+ ** but WITHOUT ANY WARRANTY; without even the implied 
+ ** warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ ** PURPOSE.
+ **
+ ********************************************************************
+ ********************************************************************/
+
+#ifndef HUNGARIAN_H
+#define HUNGARIAN_H
+
+#define HUNGARIAN_NOT_ASSIGNED 0 
+#define HUNGARIAN_ASSIGNED 1
+
+#define HUNGARIAN_MODE_MINIMIZE_COST   0
+#define HUNGARIAN_MODE_MAXIMIZE_UTIL 1
+
+typedef struct {
+  int num_rows;
+  int num_cols;
+  int** cost;
+  int** assignment;
+} hungarian_problem_t;
+
+/** This method initialize the hungarian_problem structure and init 
+ *  the  cost matrices (missing lines or columns are filled with 0).
+ *  It returns the size of the quadratic(!) assignment matrix. **/
+void hungarian_init(hungarian_problem_t* p, 
+		   int* cost_matrix, 
+		   int rows, 
+		   int cols, 
+		   int mode);
+  
+/** Free the memory allocated by init. **/
+void hungarian_free(hungarian_problem_t* p);
+
+/** This method computes the optimal assignment. **/
+void hungarian_solve(hungarian_problem_t* p);
+
+#endif
+
