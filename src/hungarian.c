@@ -30,7 +30,7 @@
 #include "hungarian.h"
 
 #define INF (0x7FFFFFFF)
-#define hungarian_test_alloc(X) do {if ((void *)(X) == NULL) fprintf(stderr, "Out of memory in %s, (%s, line %d).\n", __FUNCTION__, __FILE__, __LINE__); } while (0)
+#define hungarian_test_alloc(X) do {if ((void *)(X) == NULL) {} } while (0)
 
 void hungarian_init(hungarian_problem_t* p, int* cost_matrix, int rows, int cols, int mode) {
 
@@ -275,21 +275,21 @@ void hungarian_solve(hungarian_problem_t* p) {
     done:
 
     // Begin doublecheck the solution 23
-    for (k=0;k<m;k++)
-        for (l=0;l<n;l++)
-        if (p->cost[k][l]<row_dec[k]-col_inc[l])
-        exit(0);
-    for (k=0;k<m;k++) {
-        l=col_mate[k];
-        if (l<0 || p->cost[k][l]!=row_dec[k]-col_inc[l])
-        exit(0);
-    }
-    k=0;
-    for (l=0;l<n;l++)
-        if (col_inc[l])
-            k++;
-    if (k>m)
-        exit(0);
+    // for (k=0;k<m;k++)
+        // for (l=0;l<n;l++)
+        // if (p->cost[k][l]<row_dec[k]-col_inc[l])
+        // exit(0);
+    // for (k=0;k<m;k++) {
+        // l=col_mate[k];
+        // if (l<0 || p->cost[k][l]!=row_dec[k]-col_inc[l])
+        // exit(0);
+    // }
+    // k=0;
+    // for (l=0;l<n;l++)
+        // if (col_inc[l])
+            // k++;
+    // if (k>m)
+        // exit(0);
     // End doublecheck the solution 23
     // End Hungarian algorithm 18
 

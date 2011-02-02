@@ -58,7 +58,7 @@ simpleWavBasis = function(data, lvl, filt) {
     D = ncol(data)
     med = getMedElem(data)
 
-    W <- wavDWPT(med, n.level = lvl, wavelet = filt)
+    W <- wavDWPT(med, n.levels = lvl, wavelet = filt)
     wm = wavMRD(W)
     nbFuncs = ncol(wm)
     basis = matrix(nrow=nbFuncs, ncol=D)
