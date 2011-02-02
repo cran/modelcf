@@ -1,4 +1,4 @@
-\name{Z_modelcf}
+\name{modelcf}
 \alias{modelcf}
 \title{package modelcf}
 
@@ -8,5 +8,11 @@
 
 \seealso{
 	\code{\link{fmetam}}, \code{\link{predict.modelcf}}, \code{\link{mixpredf}}, \code{\link{nfoldcv}}.
+}
+
+\note{
+	This work was supported by the CEA Cadarache, where I was employed three years for my PhD.
+	I would also like to thank Bertrand Iooss and Michel Marques for all their suggestions of improvement,
+	and all the people who helped me, directly or not, for creating this package.
 }
 

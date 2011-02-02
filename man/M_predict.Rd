@@ -1,4 +1,4 @@
-\name{Z_predict}
+\name{predict}
 \alias{predictClassif}
 \alias{predictRegress}
 \alias{predict.modelcf}

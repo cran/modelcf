@@ -1,24 +1,26 @@
 #function LPcaML : local PCA + alpha-TSLN
-LPcaML = function(data, d, adn=FALSE, knn=0, alpha=0.5) {
+LPcaML = function(data, d, adn="none", k=0, alpha=0.5, trcv=0.7) {
+	require(class)
     n=nrow(data) ; D = ncol(data)
     minSizeV = min(n, ceiling((1.0/alpha)*(d+1)) )
-    if (knn==0) knn = getKnn(n)
-    kNN_orig = knn
-    knn = max(minSizeV-1,knn)
+    if (k==0) k = getKnn(n)
+    k_orig = k
+    k = max(minSizeV-1,k)
 
     #ensure connexity :
-    NI = getNI(data, adn, d, knn)
-    NI = testConnexity(data, NI, knn)
+    NI = getNI(data, adn, d, k)
+    NI = testConnexity(data, NI, k)
+    NI = getMutual(NI, TRUE)
     # add "self" indices :
     for (i in 1:n) NI[[i]] = c(i,NI[[i]])
-    knns = sapply(NI, length)
+    ks = sapply(NI, length)
 
     #initialisation : seek for the point where manifold is the most dense
     #we could try to find the "most linear" point, but this is very costly..
     bestInd = 0
     minDist = Inf
     for (i in 1:n) {
-        tmp = sqrt( sum (data[i,] - data[ NI[[i]] [knns[i]], ])^2 )
+        tmp = sqrt( sum (data[i,] - data[ NI[[i]] [ks[i]], ])^2 )
         if (tmp < minDist) {
             minDist = tmp
             bestInd = i
@@ -29,30 +31,21 @@ LPcaML = function(data, d, adn=FALSE, knn=0, alpha=0.5) {
     #loop over all neighborhoods and include them if they overlap ;
     sets = rep(0,n) #indices of sets of indices already treated, wrt. alpha-TSLN order
     sets[1] = bestInd
-    current = rep(1,n) #the NON-indices of current sets (1 if NOT current)
-    current[ NI[[bestInd]] ] = 0
+    current = rep(FALSE,n) #the indices of current sets
+    current[ NI[[bestInd]] ] = TRUE
     curIndSet=1
-
-    while (sum(current) > 0) {
-        bestCand = 0 ; bestSumCand = 0
-        savCand = 0 ; bestSav = Inf
+    
+    while (sum(current) < n) {    
+        bestCand = 0 ; bestValCand = Inf
         for (i in 1:n) {
             tmp = sum(current[ NI[[i]] ])
-            if (tmp > bestSumCand) {
-                if (tmp <= (1.0-alpha)*knns[i]) {
-                    bestCand = i
-                    bestSumCand = tmp
-                }
-                else {
-                    if (tmp < bestSav) {
-                        savCand = i
-                        bestSav = tmp
-                    }
-                }
+            deltaAbs = abs(tmp - alpha*ks[i])
+            if (tmp < ks[i] && deltaAbs < bestValCand) {
+                bestCand = i
+                bestValCand = deltaAbs
             }
         }
-        if (bestCand==0) bestCand = savCand
-        current[ NI[[bestCand]] ] = 0
+        current[ NI[[bestCand]] ] = TRUE
         curIndSet = curIndSet + 1
         sets[curIndSet] = bestCand
     }
@@ -69,7 +62,7 @@ LPcaML = function(data, d, adn=FALSE, knn=0, alpha=0.5) {
     means = as.list(rep(0,nbSets)) #means of "alpha-bubbles"
     bases = as.list(rep(0,nbSets)) #corresponding local basis
     invB = as.list(rep(0,nbSets)) #storage of inverse B matrices
-    invB[[1]] = diag(knns[bestInd]) #first one is identity (and useless)
+    invB[[1]] = diag(ks[bestInd]) #first one is identity (and useless)
 
     means[[1]] = colMeans(data[firstInds,])
     ctrData = t( t(data[firstInds,]) - means[[1]] )
@@ -77,7 +70,7 @@ LPcaML = function(data, d, adn=FALSE, knn=0, alpha=0.5) {
     bases[[1]] = t(as.matrix(s$v))
     locCoords[firstInds,] = ctrData %*% s$v
     globCoords[firstInds,] = locCoords[firstInds,] #anchor points
-
+    
     #loops to get all coordinates patches
     for (i in 2:nbSets) {
 
@@ -93,19 +86,21 @@ LPcaML = function(data, d, adn=FALSE, knn=0, alpha=0.5) {
         locCoords[curInds,] = ctrData %*% s$v
         bases[[i]] = t(as.matrix(s$v))
 
-        #find the union of C_i \inter C_j, j<i :
+        #find the union of C_i inter C_j, j<i :
         inters = rep(FALSE,n)
         for (j in 1:(i-1)) inters[ intersect(curInds,NI[[ sets[j] ]]) ] = TRUE
 
         #find the matrix B transforming local into global coordinates
         # ==> standard linear regression
-        B = matrix()
         sint = sum(inters)
         if (sint>1) unYp = cbind(rep(1,sint),locCoords[inters,])
         else unYp = t(as.matrix(c(1,locCoords[inters,])))
 
         #solve (1 Y')B=Y (see article)
-        if (sint >= d+1) B = mppsinv(unYp) %*% globCoords[inters,]
+        B = matrix()
+        if (sint >= d+1) B = mppsinv(unYp) %*% globCoords[inters,] #always this case.. (in principle)
+
+		else if (sint == 1) B = rbind(globCoords[inters,],matrix(0,nrow=d,ncol=d)) #shouldn't happen, but...
 
         #a little more complicated :
         else {
@@ -133,7 +128,18 @@ LPcaML = function(data, d, adn=FALSE, knn=0, alpha=0.5) {
         }
         else invB[[i]] = rbind(B[1,],matrix(0.0,nrow=d,ncol=d))
     }
-    return (list("data"=data,"embed"=globCoords,"invB"=invB,"indSets"=indSets,"means"=means,"bases"=bases,"knn"=kNN_orig))
+
+	#final stage : train a classifier z_i --> labels
+	labels = rep(0,n)
+	for (i in nbSets:1) labels[ NI[[ sets[i] ]] ] = i
+	labels = reordering(labels)
+
+    #optimize model parameters (number of neighbors) :
+    kclass = optimParams_classif(globCoords,labels,"kNN",floor(trcv*n),trcv)
+    #build model :
+    classifObj = learnClassif(globCoords, labels, "kNN", kclass)
+
+    return (list("data"=data,"embed"=globCoords,"invB"=invB,"indSets"=indSets,"means"=means,"bases"=bases, "classi"=classifObj))
 }
 
 
@@ -142,41 +148,13 @@ LPcaML = function(data, d, adn=FALSE, knn=0, alpha=0.5) {
 
 #output a curve from some d-dimensional representation
 LPcaML_rec = function(LPout,newEmb) {
-    data = LPout$data
-    n = nrow(data) ; D = ncol(data)
-    knn = LPout$knn
-    if (knn==0) knn = getKnn(n)
-    d = ncol(LPout$embed)
+	d = ncol(LPout$embed)
+    #predict classification (=="alpha-bubble") :
+	cl = predictClassif(LPout$classi,newEmb)
 
-    # STEP 0: COMPUTE PAIRWISE DISTANCES and FIND NEIGHBORS
-    embeds = LPout$embed
-    dists = sqrt( colSums( (t(embeds) - newEmb)^2 ) )
-    srt = sort(dists,index.return=TRUE)
-
-    if (srt$x[1] < EPS() ) return ( data[srt$ix[1],] ) #shortcut
-    neighbs = srt$ix[1:knn]
-
-    #histogram of sets indices among neighbors :
-    indSets = LPout$indSets ; nbSets = length(indSets)
-    countSets = rep(0,nbSets)
-    for (i in 1:knn) {
-        for (j in 1:nbSets) {
-            if (length(intersect(neighbs[i],indSets[[j]])) > 0)
-                countSets[j] = countSets[j] + 1
-        }
-    }
-    reconst = rep(0.0,D)
-	wm = which.max(countSets) ; seqVect = 1:nbSets
-    exaequos = seqVect[ countSets == countSets[wm] ] #indices of "winning" neighbors
-
-    for (i in exaequos) {
-        if (i>1) locCoords = (newEmb-LPout$invB[[i]][1,]) %*% LPout$invB[[i]][2:(d+1),]
-        else locCoords = newEmb
-        tmp = LPout$means[[i]] + linear_rec(locCoords,LPout$bases[[i]])
-        reconst = reconst + tmp
-    }
-
-    reconst = reconst / length(exaequos)
+	if (cl>1) locCoords = (newEmb-LPout$invB[[cl]][1,]) %*% LPout$invB[[cl]][2:(d+1),]
+    else locCoords = newEmb
+    reconst = LPout$means[[cl]] + linear_rec(LPout$bases[[cl]], locCoords)
     return (reconst)
 }
 

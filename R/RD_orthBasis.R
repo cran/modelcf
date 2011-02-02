@@ -24,10 +24,10 @@ basisMostVar = function(basis,data,nbCoefs) {
 #generate Fourier basis on an interval (card == nbCoefs)
 genFourier = function(data,nbCoefs,withVar=TRUE) {
     D = ncol(data)
-    res = matrix(nrow=floor(D/2)+1,ncol=D)
+    res = matrix(NA, nrow=floor(D/2)+1,ncol=D)
     res[1,] = rep(1.0/(sqrt(D)),D)
     times = 1:D
-    for (i in 1 : D%/%4) {
+    for (i in 1 : floor(D/4)) {
         res[2*i,] = cos( (2*pi*i*times) / (D-1) )
         res[2*i+1,] = sin( (2*pi*i*times) / (D-1) )
     }
@@ -35,6 +35,10 @@ genFourier = function(data,nbCoefs,withVar=TRUE) {
     # orthonormalize the basis :
     for (i in 2:nrow(res)) res[i,] = res[i,] / sqrt(sum(res[i,]^2))
     if (!withVar) return (res[1:min(nbCoefs,nrow(res)),])
+
+	checkLines = nrow(res)
+	while (is.na(res[checkLines,1])) checkLines = checkLines - 1
+	res = res[1:checkLines,]
 
     #get the max variance coefficients according to data :
     return (basisMostVar(res,data,nbCoefs))
@@ -66,35 +70,36 @@ simpleWavBasis = function(data, lvl, filt) {
 }
 
 #decomposition onto an orthonormal basis :
-linEmb = function(data, dim, linbt="PCA",filt="haar",wvar=TRUE) {
+linEmb = function(data, d, linbt="PCA",filt="haar",wvar=TRUE) {
     D = ncol(data)
+    checkDependP(linbt=linbt)
 
     if (linbt=="PCA") {
         # (functional..) PCA analysis :
-        s = svd(data,nu=0,nv=dim)
+        s = svd(data,nu=0,nv=d)
         basis = t(s$v)
     } else
 
     if (linbt=="four") {
-        if (dim >= ceiling(D/2)) return ( linEmb(data,dim) )
+        if (d >= ceiling(D/2)) return ( linEmb(data,d) )
         #Fourier basis :
-        basis = genFourier(data,dim,wvar)
+        basis = genFourier(data,d,wvar)
     } else
 
     if (linbt=="wav") {
         lvl = floor(log2(D))
-        if (2^lvl < dim) return ( linEmb(data,dim) )
+        if (2^lvl < d) return ( linEmb(data,d) )
         s = simpleWavBasis(data,lvl,filt)
 
         basis = matrix()
-        if (wvar) basis = basisMostVar(s,data,dim)
-        else basis = s[1:min(nrow(s),dim),]
+        if (wvar) basis = basisMostVar(s,data,d)
+        else basis = s[1:min(nrow(s),d),]
     } else
 
     if (linbt=="bsp") {
-        tmp = t(ns(1:D,df=dim))
+        tmp = t(ns(1:D,df=d))
         # orthonormalize the basis :
-        s = svd(tmp,nu=0,nv=dim)
+        s = svd(tmp,nu=0,nv=d)
         basis = t(s$v)
     }
 
@@ -106,7 +111,7 @@ linEmb = function(data, dim, linbt="PCA",filt="haar",wvar=TRUE) {
 ## reconstruction function (easy in those cases..) :
 
 #coefs. in lines, basis functions in lines too
-linear_rec = function(coefs, basis) {
+linear_rec = function(basis, coefs) {
     if (!is.matrix(coefs)) coefs = t(as.matrix(coefs))
     return ( coefs %*% basis )
 }

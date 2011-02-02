@@ -1,4 +1,4 @@
-\name{A_dataSets}
+\name{dataSets}
 \docType{data}
 \alias{datacf}
 \alias{dataIn}

@@ -1,4 +1,4 @@
-\name{M_printPlot}
+\name{printPlot}
 \alias{plotC}
 \alias{plotPts}
 \alias{print.modelcf}

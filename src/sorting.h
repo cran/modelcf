@@ -2,6 +2,7 @@
 #define _SORTING_
 
 #include <R.h>
+#include <stdlib.h>
 
 /* fonction auxiliaire pour le quicksort */
 int partitionner(double *tableau, int* positions, int p, int r);

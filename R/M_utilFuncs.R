@@ -1,14 +1,15 @@
 ############################################
 ##selective libraries loading :
-checkDependP = function(mreg,mclass,mdim,linbt) {
+checkDependP = function(mclust="",mclass="",mdim="",linbt="",mreg="") {
+    if (mclust=="spec") require("kernlab",quietly=TRUE)
     if (mclass=="kNN") require(class,quietly=TRUE)
     if (mclass=="SVM" || mreg=="SVR") require(e1071,quietly=TRUE)
     if (mclass=="ctree") require(rpart,quietly=TRUE) #classification tree
     if (mclass=="rforest" || mreg=="rforest") require(randomForest,quietly=TRUE)
     if (mclass=="RDA") require(klaR,quietly=TRUE) #Regularized Discriminant Analysis
     if (mreg=="GP") require(mlegp,quietly=TRUE)
-    if (mreg=="BRT") require(gbm,quietly=TRUE)
     if (linbt=="wav") require(wmtsa,quietly=TRUE) #wavelets
+    if (linbt=="bsp") require(splines,quietly=TRUE) #B-splines
 }
 
 
@@ -83,7 +84,7 @@ mppsinv = function(M) {
 
 #if simple knn needed : empirical heuristic..
 getKnn = function(n) {
-    return ( min( n-1, ( ceiling(sqrt(n)) + floor(log(n)/log(5)) ) ) )
+    return ( max(1, min( n-1, ceiling(sqrt(n)) ) ) ) #+ floor(log(n)/log(5)) ) ) )
 }
 
 
@@ -125,12 +126,10 @@ print.modelcf = function(x, ...) {
         type = model$mclust ; clname = ""
         if (type=="HDC") clname="k-means based on Hitting Times"
         else if (type=="CTH") clname="Commute-Time Hierarchic"
-        else if (type=="CTHC") clname = "Commute-Time CHAMELEON"
         else if (type=="CTKM") clname="Commute-Time k-means"
         else if (type=="specH") clname="spectral clustering (with hierarchical clust.)"
         else if (type=="specKM") clname="spectral clustering (with k-means)"
         else if (type=="CH") clname="hierarchical clustering"
-        else if (type=="CHC") clname="CHAMELEON clustering"
         else if (type=="ACP") clname="ACP-k-means from Chiou and Li"
         else if (type=="KM") clname="basic k-means"
         cat(paste("    inputs-outputs clustering method: ",clname,"\n",sep=""))

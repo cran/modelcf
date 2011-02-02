@@ -1,4 +1,4 @@
-\name{M_errors}
+\name{errors}
 \alias{fperrors}
 \title{Empirical error estimators}
 

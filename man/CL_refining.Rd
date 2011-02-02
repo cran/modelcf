@@ -1,4 +1,4 @@
-\name{CL_refining}
+\name{refining}
 \alias{reordering}
 \alias{fusion_smcl}
 \alias{mergeToK}

@@ -318,7 +318,7 @@ void hungarian_solve(hungarian_problem_t* p) {
 }
 
 /* get the optimal assignment, by calling hungarian_solve above */
-void getOptAssign(int* P1, int* P2, int* maxInd, int* n, int* assign_cl) {
+void getOptAssign(int* P1, int* P2, int* maxInd, int* n, int* maxim, int* assign_cl) {
 
     /* first, determine weights by computing intersections
      * reads like: weights[i*(*n)+j] == gain when cluster i in P1
@@ -339,7 +339,8 @@ void getOptAssign(int* P1, int* P2, int* maxInd, int* n, int* assign_cl) {
 
     //then solve problem :
     hungarian_problem_t p;
-    hungarian_init(&p, utils, *maxInd, *maxInd, HUNGARIAN_MODE_MAXIMIZE_UTIL) ;
+    if (*maxim) hungarian_init(&p, utils, *maxInd, *maxInd, HUNGARIAN_MODE_MAXIMIZE_UTIL);
+    else hungarian_init(&p, utils, *maxInd, *maxInd, HUNGARIAN_MODE_MINIMIZE_COST);
     hungarian_solve(&p);
 
     //and now get optimal assignment :

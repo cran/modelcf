@@ -2,12 +2,12 @@
 ## calls of functions for dimension reduction and reconstruction
 
 #dimensionality reduction
-nlin_redDim = function(method, data, d, adn, knn, alpha, knnmin, knnmax, tsoft, thlvl, hdth) {
+nlin_redDim = function(method, data, d, adn, k, alpha, trcv, kmin, kmax, tsoft, thlvl, hdth, advhr) {
 
-    if (knn==0) knn = getKnn(nrow(data))
-    if (method=="LPcaML") return ( LPcaML(data, d, adn, knn, alpha) )
-    if (method=="RML") return ( RML(data,d,adn,knnmin,knnmax,tsoft,thlvl,hdth) )
-    if (method=="GCEM") return ( GCEM(data, d, adn, knn, alpha, tsoft, thlvl, hdth) )
+    if (k==0) k = getKnn(nrow(data))
+
+    if (method=="LPcaML") return ( LPcaML(data, d, adn, k, alpha, trcv) )
+    if (method=="RML") return ( RML(data, d, kmin, kmax, tsoft, thlvl, hdth, advhr) )
 }
 
 #reconstruction

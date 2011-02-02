@@ -1,10 +1,11 @@
-export (updateDissims, chameleon, phclust, gtclusts, checkParts, varInfo, countPart, findK_gtclusts, 
-gtclusts_inout, km_dists, km_PCA, reordering, fusion_smcl, mergeToK, spec_emb, spec_clust, learnClassif, 
-optimParams_classif, knnPredict, lpcaPredict, xtr_plan1, xtr_plan2, learnRegress, optimParams_regress, 
-fperrors, fmetam_1cl, fmetam, nfoldcv, getcoefc, mixpredf, plotC, plotPts, print.modelcf, predictRegress, 
-predictClassif, predict.modelcf, locdim1, dimest1, dimest2, GCEM, GCEM_rec, LPcaML, LPcaML_rec, 
-basisMostVar, genFourier, getMedElem, simpleWavBasis, linEmb, linear_rec, nlin_redDim, 
-nlin_adaptRec, RML, RML_rec, .Last.lib)
+export (phclust, gtclusts, checkParts, varInfo, countPart, findK_gtclusts, gtclusts_inout,
+km_dists, km_PCA, reordering, fusion_smcl, mergeToK, gt_cxcomps, testConnexity,
+learnClassif, optimParams_classif, learnRegress, optimParams_regress,
+fperrors, fmetam_1cl, fmetam, fm_resids, nfoldcv, getcoefc,
+mixpredf, plotC, plotPts, print.modelcf, predictRegress, predictClassif, predict.modelcf,
+dest_fara, dest_PCA, dest_clust, dest_RML, dest_rgrl, dest_levi, dest_unbl, dest_pett, dest_sliv,
+LPcaML, LPcaML_rec, linEmb, linear_rec, nlin_redDim,
+nlin_adaptRec, RML, RML_rec, getNI, neighbs_RML, .Last.lib)
 
 useDynLib(modelcf)
 

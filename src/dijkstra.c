@@ -1,4 +1,5 @@
 #include <R.h>
+#include <stdlib.h>
 
 /* Dijkstra from index debut ; dist au format vecteur ; "output" geodesics and predecessors in geodsPreds */
 void dijkstra(double* dists, int* n, int* start, double* geodsPredsLevels) {
@@ -8,7 +9,7 @@ void dijkstra(double* dists, int* n, int* start, double* geodsPredsLevels) {
     double infDist, minGeods;
 
     /* initalisations I : */
-    unseen = (int*) R_alloc (*n, sizeof(int));
+    unseen = (int*) malloc ((*n) * sizeof(int));
     infDist = 0.0;
     for (i=0; i < (*n)*(*n); i++) {
         if (dists[i] > infDist) infDist = dists[i];
@@ -54,4 +55,6 @@ void dijkstra(double* dists, int* n, int* start, double* geodsPredsLevels) {
             }
         }
     }
+    free(unseen);
 }
+

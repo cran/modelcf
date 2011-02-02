@@ -1,4 +1,4 @@
-\name{Z_mixpred}
+\name{mixpred}
 \alias{getcoefc}
 \alias{mixpredf}
 \title{Mixing functional models}
@@ -53,7 +53,7 @@
 	m1 = fmetam(dataIn[trainInds,], dataOut1[trainInds,], d=3, wcl=FALSE,
 	    mdim="linear")
 	m2 = fmetam(dataIn[trainInds,], dataOut1[trainInds,], d=3, wcl=FALSE,
-	    mdim="RML", knnmin=15, knnmax=25)
+	    mdim="RML", kmin=15, kmax=25)
 	m3 = fmetam(dataIn[trainInds,], dataOut1[trainInds,], d=3, wcl=FALSE,
 	    mreg="fkNN")
 	#mix the three, giving \dQuote{first third} weight to the first,

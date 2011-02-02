@@ -1,4 +1,4 @@
-\name{RD_RML}
+\name{RML}
 \alias{RML}
 \alias{RML_rec}
 \title{Riemannian Manifold Learning}
@@ -10,8 +10,8 @@
 }
 
 \usage{
-	RML(data, d, adn=FALSE, knnmin=0, knnmax=0, tsoft=0.1,
-		thlvl=0.3, hdth=0)
+	RML(data, d, kmin=0, kmax=0, tsoft=0.1,
+		thlvl=0.3, hdth=2, advhr=FALSE)
 
 	RML_rec(RLout, newEmb)
 }
@@ -19,19 +19,19 @@
 \arguments{
 	\item{data}{matrix of n vectors in rows ; \code{data[i,]} is the i-th m-dimensional vector}
 
-	\item{d}{estimated data dimension. It can be estimated using functions \code{\link{dimest1}} or \code{\link{dimest2}}}
+	\item{d}{estimated data dimension (e.g. through functions from \code{\link{dimension}} file)}
 
-	\item{adn}{boolean for adapted point-varying neighborhoods, from Wang et al. article ; in short, the more linear data is around \code{x}, the more \code{x} has neighbors}
+	\item{kmin}{minimum number of neighbors at each point}
 
-	\item{knnmin}{minimum number of neighbors at each point}
-
-	\item{knnmax}{maximum number of neighbors at each point}
+	\item{kmax}{maximum number of neighbors at each point}
 
 	\item{tsoft}{tolerance factor for the visibility graph computation (between 0 and 1 ; should be close to 0)}
 
 	\item{thlvl}{fraction of total elements of data to be embedded using the initial local basis}
 
 	\item{hdth}{\dQuote{hard} threshold, same as above parameter but integer. It defines the maximum level of elements in the Dijkstra graph which will be embedded using the initial local basis. If zero, only \code{thlvl} is considered}
+
+	\item{advhr}{if TRUE, the heuristic for RML's last step is based on estimated graph distances from minimal connectivity graph ; if FALSE, the heuristic use euclidian distances}
 
 	\item{RLout}{an object as output by \code{RML} function}
 
@@ -56,7 +56,7 @@
 \references{
 	T. Lin, H. Zha and S. U. Lee, \bold{Riemannian Manifold Learning for Nonlinear Dimensionality Reduction}, at European Conference on Computer Vision, Graz, Austria 9: 44-55, 2006
 
-	J. Wang, Z. Zhang and H. Zha, \bold{Adaptive Manifold Learning}, in Advances in Neural Information Processing Systems 17: 1473-1480, 2005
+	T. Lin and H. Zha, \bold{Riemannian Manifold Learning}, in IEEE Transactions on Pattern Analysis and Machine Intelligence 30 (5): 796-809, 2008
 }
 
 \examples{
@@ -72,7 +72,7 @@
 	sw = cbind( phi*cos(phi), phi*sin(phi), z )
 
 	#launch algorithm and visualize result
-	emb = RML(sw, 2, knnmin=15, knnmax=30)$embed
+	emb = RML(sw, 2, kmin=15, kmax=30)$embed
 	plotPts(emb, cl=cols)
 }
 

@@ -1,4 +1,5 @@
 #include <R.h>
+#include <stdlib.h>
 
 /* check if a vector contain any 0 */
 int checkZero(int* vect, int n) {
@@ -17,7 +18,7 @@ void weakConnexSym(double* binMat, int n, int* cc) {
     for (i=0; i < n; i++) cc[i] = 0;
     curInd = 0;
     hasZeros = 1;
-    alreadyExpanded = (int*) R_alloc (n, sizeof(int));
+    alreadyExpanded = (int*) malloc (n * sizeof(int));
 
     /* while the entire graph hasn't been visited */
     while (hasZeros) {
@@ -46,6 +47,7 @@ void weakConnexSym(double* binMat, int n, int* cc) {
         curInd = checkZero(cc,n);
         hasZeros = curInd;
     }
+    free(alreadyExpanded);
 }
 
 /* aux function for "assymmetric" connexity : expands local neighborhoods */
@@ -67,7 +69,7 @@ void expand(double* binMat, int n, int* cc, int index) {
 
 /* connex components analysis for WEAK definition, "assymetric" graph */
 void weakConnexAssym(double* binMat, int n, int* cc) {
-    int* oldCC = (int*) R_alloc (n, sizeof(int));
+    int* oldCC = (int*) malloc (n * sizeof(int));
     int i, ccHasChanged;
 
     /* strategy = local neighbors expanding */
@@ -76,7 +78,7 @@ void weakConnexAssym(double* binMat, int n, int* cc) {
     ccHasChanged = 1;
     while (ccHasChanged) {
 
-        oldCC = cc;
+        for (i=0; i < n; i++) oldCC[i] = cc[i];
         for (i=0; i < n; i++) expand(binMat, n, cc, i);
         ccHasChanged = 0;
         for (i=0; i < n; i++) {
@@ -86,6 +88,7 @@ void weakConnexAssym(double* binMat, int n, int* cc) {
             }
         }
     }
+    free(oldCC);
 }
 
 /* explore the connectivity of a graph (binarySim = adjacency matrix) */

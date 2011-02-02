@@ -15,11 +15,12 @@ evalParams = function(x, a2, Am, bv) {
 #solver : find the coordinates of data[curInd,] given the known embeddings
 #predInd = index of the predecessor of curInd on a shortest path.
 solveConstraints = function(data, embedding, curInd, predInd, predNeighbs, dim) {
+
     normQR = sqrt(sum((data[curInd,] - data[predInd,])^2))
     x = 0
     #get A and b (see article)
     if (dim > 1) {
-        A = t( t(embedding[predNeighbs,]) - embedding[predInd,] )
+        A = t( t(embedding[predNeighbs,]) - embedding[predInd,] )		
         A = A / (normQR * sqrt(rowSums ( ( t( t(embedding[predNeighbs,]) - embedding[predInd,] ) )^2) ))
         b = colSums( (data[curInd,] - data[predInd,]) * ( t(data[predNeighbs,]) - data[predInd,] ) )
         b = b / (normQR * (sqrt( rowSums( t( ( t(data[predNeighbs,]) - data[predInd,])^2 ) ) )) )

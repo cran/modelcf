@@ -1,4 +1,4 @@
-\name{RD_LPcaML}
+\name{LPcaML}
 \alias{LPcaML}
 \alias{LPcaML_rec}
 \title{Local PCA Manifold Learning}
@@ -10,7 +10,7 @@
 }
 
 \usage{
-	LPcaML(data, d, adn=FALSE, knn=0, alpha=0.5)
+	LPcaML(data, d, adn="none", k=0, alpha=0.5, trcv=0.7)
 
 	LPcaML_rec(LPout, newEmb)
 }
@@ -18,14 +18,16 @@
 \arguments{
 	\item{data}{matrix of n vectors in rows ; \code{data[i,]} is the i-th m-dimensional vector}
 
-	\item{d}{estimated data dimension. It can be estimated using functions \code{\link{dimest1}} or \code{\link{dimest2}}}
+	\item{d}{estimated data dimension (e.g. through functions from \code{\link{dimension}} file)}
 
-	\item{adn}{boolean for adapted point-varying neighborhoods, from Wang et al. article ; in short, the more linear data is around \code{x}, the more \code{x} has neighbors}
+	\item{adn}{string for adapted point-varying neighborhoods. "none" for no adaptivity, "adbas" for simple local PCA based neighborhoods (see code), "ad1" for the Zhan et al. method, and "ad2" for Wang et al. method. In short, the more linear data is around \code{x}, the more \code{x} has neighbors}
 
-	\item{knn}{fixed number of neighbors at each point (used only if \code{adn==FALSE}). If zero, a simple heuristic will determine it around \code{sqrt(nrow(data))}}
+	\item{k}{fixed number of neighbors at each point (used only if \code{adn==FALSE}). If zero, a simple heuristic will determine it around \code{sqrt(nrow(data))}}
 
 	\item{alpha}{fraction of overlapping elements when building the traversal sequence of neighborhoods}
 
+	\item{trcv}{fraction of total examples on which a model is trained during cross-validation procedures}
+	
 	\item{LPout}{an object as output by \code{LPcaML} function}
 
 	\item{newEmb}{a new embedding from which the high dimensional object has to be estimated}
@@ -47,9 +49,7 @@
 }
 
 \references{
-	J. Wang, Z. Zhang and H. Zha, \bold{Adaptive Manifold Learning}, in Advances in Neural Information Processing Systems 17: 1473-1480, 2005
-
-	Y. Zhan, J. Yin, G. Zhang and En Zhu, \bold{Incremental Manifold Learning Algorithm Using PCA on Overlapping Local Neighborhoods for Dimensionality Reduction}, at  3rd International Symposium on Advances in Computation and Intelligence 5370: 406-415, 2008
+	Y. Zhan, J. Yin, G. Zhang and E. Zhu, \bold{Incremental Manifold Learning Algorithm Using PCA on Overlapping Local Neighborhoods for Dimensionality Reduction}, at  3rd International Symposium on Advances in Computation and Intelligence 5370: 406-415, 2008
 }
 
 \examples{

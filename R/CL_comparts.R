@@ -1,4 +1,4 @@
-#compare two partitions...
+#compare two partitions
 
 ## (simple) assymmetric measure :
 

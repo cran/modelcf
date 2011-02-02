@@ -12,10 +12,10 @@ reordering = function(clusts) {
             counter = counter + 1
         }
     }
-    return (newCl)
+    return ( as.integer(newCl) )
 }
 
-# merge small clusters : pourrait etre interessant aussi avec du hungarian matching ;
+# merge small clusters :
 #idea : mean of 10 smallest distances from one class to another
 #complexity around K^3 (like hungarian matching...)
 fusion_smcl = function(data, clusts, minszcl) {
@@ -53,7 +53,7 @@ fusion_smcl = function(data, clusts, minszcl) {
         if (!test) break
     }
 
-    return (newCl)
+    return ( as.integer(newCl) )
 }
 
 #version saying "I want exactly K clusters" from clusts :

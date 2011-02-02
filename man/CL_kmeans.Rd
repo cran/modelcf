@@ -1,4 +1,4 @@
-\name{CL_kmeans}
+\name{kmeans}
 \alias{km_PCA}
 \alias{km_dists}
 \title{k-means like functions}
@@ -22,7 +22,7 @@
 
 	\item{K}{expected number of clusters}
 
-	\item{d}{estimated data dimension. It can be estimated using functions \code{\link{dimest1}} or \code{\link{dimest2}}}
+	\item{d}{estimated data dimension (e.g. through functions from \code{\link{dimension}} file)}
 
 	\item{simplif}{boolean at \code{TRUE} for simplified algorithm, without leave-one-out SVD's (actually very costly)}
 

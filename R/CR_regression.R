@@ -5,6 +5,7 @@
 learnRegress = function(x, y, method, params, stred) {
     x = as.matrix(x) ; y = as.matrix(y)
     d = ncol(y)
+    checkDependP(mreg=method)
 
     #projection pursuit regression
     if (method=="PPR") {
@@ -33,24 +34,10 @@ learnRegress = function(x, y, method, params, stred) {
         return ( list("type"=method,"obj"=ra,"sdouts"=sdouts) )
     } else
 
-    # boosting of regression trees :
-    if (method=="BRT") {
-        outs = y ; sdouts = NULL
-        if (stred) {
-            sdouts = standz(y)
-            outs = sdouts$data
-        }
-
-        dtf = data.frame(x)
-        tr = as.list(rep(0,d))
-        for (i in 1:d) tr[[i]] = gbm(outs[,i] ~ .,data=dtf,distribution="gaussian",n.trees=params[i])
-        return ( list("type"=method,"btree"=tr,"ntrees"=params,"df"=dtf,"sdouts"=sdouts) )
-    } else
-
     # Nadaraya-Watson (with or without dim. red.), or local PCA regression
     if (method=="kNN" || method=="fkNN" || method=="lPCA") {
         sdins = standz(x)
-        return ( list("type"=method,"x_train"=sdins$data,"y_train"=y,"knn"=params,"sdins"=sdins) )
+        return ( list("type"=method,"x_train"=sdins$data,"y_train"=y,"kd"=params,"sdins"=sdins) )
     } else
 
     # gaussian processes (quite slow)
@@ -91,21 +78,14 @@ predictRegress = function(model,newIn_s) {
     if (!is.matrix(newIn_s)) newIn_s = t(as.matrix(newIn_s))
     #scale input(s) if needed :
     if (length(model$sdins) > 0) newIn_s = t( ( t(newIn_s) - model$sdins$mean ) / model$sdins$stdevs )
-    nb2pred = nrow(newIn_s) ; pr = matrix(nrow=nb2pred,ncol=0)
-
-    if (model$type=="BRT") {
-        dtf = model$df
-        dtf[1:nb2pred,] = newIn_s
-        d = length(model$btree)
-        for (i in 1:d) pr = cbind(pr, as.matrix(predict(model$btree[[i]],dtf[1:nb2pred,],n.trees=model$ntrees[i])))
-    } else
+    pr = matrix(nrow=nrow(newIn_s), ncol=0)
 
     if (model$type=="kNN" || model$type=="fkNN") { #Nadaraya-Watson (on reduced coordinates or functions)
-        pr = knnPredict(model$x_train, model$y_train, newIn_s, model$knn)
+        pr = knnPredict(model$x_train, model$y_train, newIn_s, model$kd[1])
     } else
 
     if (model$type=="lPCA") { #local PCA regression (on functions) :
-        pr = lpcaPredict(model$x_train, model$y_train, newIn_s, model$knn)
+        pr = lpcaPredict(model$x_train, model$y_train, newIn_s, model$kd)
     }
 
     else { #all other cases
@@ -124,29 +104,48 @@ predictRegress = function(model,newIn_s) {
 ## Parameters optimisation :
 
 #parameters optimisation with a "good" test set :
-optimParams_regress = function(x,y,method,knn,trcv,verb) {
+optimParams_regress = function(x,y,method,k,d,trcv,verb) {
+	checkDependP(mreg=method)
     if (method=="rforest" || method=="GP") return (0)
 
+	design = c()
+	n = nrow(x)
+	if (n < 10) {
+		design = 1:n
+    	x_test = as.matrix(x[design,])
+		y_test = as.matrix(y[design,])
+    }
     #extract training data from x rows :
-    design = xtr_plan2(x,knn,trcv)
+    else {
+		design = xtr_plan2(x,k,trcv)
+		x_test = as.matrix(x[-design,])
+		y_test = as.matrix(y[-design,])
+    }
     x_train = as.matrix(x[design,])
-    x_test = as.matrix(x[-design,])
     y_train = as.matrix(y[design,])
-    y_test = as.matrix(y[-design,])
 
     #and optimize the chosen model parameters on those sets : [N-W and lPCA = special]
     if (method=="kNN" || method=="fkNN" || method=="lPCA") {
-        bestInd=1 ; bestObj = Inf
-        for (j in 1:( min( nrow(x_train)%/%5, 50 ) )) {
-            kl_obj = learnRegress(x_train,y_train,method,j,FALSE)
-            pr = predictRegress(kl_obj, x_test)
-            op = sum( sqrt( rowSums( (pr - y_test)^2 ) ) )
-            if (op < bestObj) {
-                bestInd = j
-                bestObj = op
-            }
-        }
-        return (bestInd)
+        bestK=1 ; bestObj = Inf
+        nTR = nrow(x_train)
+        knnTR = getKnn(nTR)
+        jMin = 1 ; jMax = min(30, 2*knnTR, nTR-1)
+        if (method=="lPCA") {
+			jMin = min(10, nTR)
+			jMax = max(jMin, jMax)
+		}
+        for (j in jMin:jMax) {
+			if (verb) cat(paste("    try kNN = ",j,"\n",sep=""))
+
+			kl_obj = learnRegress(x_train,y_train,method,c(j,d),FALSE)
+			pr = predictRegress(kl_obj, x_test)
+			op = sum( sqrt( rowSums( (pr - y_test)^2 ) ) )
+			if (op < bestObj) {
+				bestK = j
+				bestObj = op
+			}
+		}
+        return (c(bestK,d)) #retourne (k, d) pour lPCA et fkNN
     }
 
     res = 0 ; d = ncol(y)
@@ -168,18 +167,18 @@ optimParams_regress = function(x,y,method,knn,trcv,verb) {
             res[3,i] = svrParams$best.parameters$epsilon
         } else
 
-        if (method=="PPR" || method=="BRT") {
-            bestInd=1 ; bestObj = Inf
-            for (j in 1:(min(3*d,30))) {
+        if (method=="PPR") {
+            bestNT=1 ; bestObj = Inf
+            for (j in 1:min(nrow(x_train), 3*d, 30)) {
                 learn_obj = learnRegress(x_train,y_train[,i],method,j,TRUE)
                 pr = predictRegress(learn_obj,x_test)
                 op = sqrt( sum( (pr - y_test[,i])^2 ) )
                 if (op < bestObj) {
-                    bestInd = j
+                    bestNT = j
                     bestObj = op
                 }
             }
-            res[i] = bestInd
+            res[i] = bestNT
         }
     }
 

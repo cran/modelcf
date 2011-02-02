@@ -1,4 +1,4 @@
-\name{CR_classification}
+\name{classification}
 \alias{learnClassif}
 \alias{optimParams_classif}
 \title{Building a classifier}
@@ -14,7 +14,7 @@
 \usage{
 	learnClassif(x, y, method, params)
 
-	optimParams_classif(x, y, method, knn, trcv)
+	optimParams_classif(x, y, method, k, trcv)
 }
 
 \arguments{
@@ -26,7 +26,7 @@
 
 	\item{params}{vector of parameters for the chosen method}
 
-	\item{knn}{fixed number of neighbors at each point to build the training set in cross-validation procedure}
+	\item{k}{fixed number of neighbors at each point to build the training set in cross-validation procedure}
 
 	\item{trcv}{fraction of total examples on which a model is trained during cross-validation procedure.}
 }

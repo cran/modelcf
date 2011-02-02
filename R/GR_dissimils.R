@@ -13,11 +13,11 @@ getSymSims = function(W) {
 }
 
 #build similarity matrix W :
-gtsimils = function(data, adn, d, knn) {
+gtsimils = function(data, adn, d, k) {
     n = nrow(data) ; seqVect = 1:n
 
     #get MUTUAL neighborhoods and their sizes : (=> W is ">0 symmetric")
-    NI = getNI(data, adn, d, knn, TRUE)
+    NI = getNI(data, adn, d, k, TRUE)
     knns = sapply(NI, length)
 
     #get similarity matrix :
@@ -26,9 +26,10 @@ gtsimils = function(data, adn, d, knn) {
 
         if (knns[i] > 1) {
             localDists = sqrt( colSums( ( t(data[NI[[i]],]) - data[i,] )^2 ) )
+            srt = sort(localDists)
             #local sigma :
-            firstNN = which.min(localDists >= EPS() )
-            sigma2 = (localDists[ knns[i] ]^2 - localDists[firstNN]^2) / log(localDists[ knns[i] ]^2 / localDists[firstNN]^2)
+            firstNN = which.min(localDists > EPS() )
+            sigma2 = (srt[ knns[i] ]^2 - srt[firstNN]^2) / log(srt[ knns[i] ]^2 / srt[firstNN]^2)
             #recover exceptional errors (shouldn't occur) :
             if (is.nan(sigma2)) sigma2 = 1.0
             #finally compute row of similarity matrix :
@@ -45,10 +46,10 @@ gtsimils = function(data, adn, d, knn) {
 }
 
 #return some technical parameters like stationary distribution, for each graph component
-params_rw = function(data, adn, d, knn, symm) {
+params_rw = function(data, adn, d, k, symm) {
 
     #retrieve simils and find number of connected components (each is STRONGLY connected) :
-    simils = gtsimils(data, adn, d, knn)
+    simils = gtsimils(data, adn, d, k)
     W = simils$W ; NI = simils$NI
     cc = gt_cxcomps(NI, TRUE) ; nbC = max(cc)
     params = as.list(rep(0,nbC))
@@ -111,10 +112,10 @@ params_rw = function(data, adn, d, knn, symm) {
 }
 
 #hitting times or commute distances
-hitorct = function(data, adn, d, knn, ct, symm, weight) {
+hitorct = function(data, adn, d, k, ct, symm, weight) {
     n = nrow(data) ; seqVect = 1:n
     HC = matrix(-Inf,nrow=n,ncol=n)
-    prw = params_rw(data,adn,d,knn,symm)
+    prw = params_rw(data,adn,d,k,symm)
     cc = prw$cc ; nbC = max(cc)
 
     for (i in 1:nbC) {
@@ -126,7 +127,7 @@ hitorct = function(data, adn, d, knn, ct, symm, weight) {
             ps = prw$params[[i]]$ps
 
             Z = matrix() #Fundamental matrix
-            if ( ! (prw$params[[i]]$sing) ) Z = mppsinv( diag(1,nc) - t( t(P) + ps ) )
+            if ( ! (prw$params[[i]]$sing) ) Z = mppsinv( diag(1,nc) - t( t(P) - ps ) )
             else {
                 #singular case ; we have to use some Cesaro computation..
                 Z = P
@@ -157,13 +158,13 @@ hitorct = function(data, adn, d, knn, ct, symm, weight) {
 }
 
 #get distance matrix from data and similarity : Commute Time
-ctdists = function(data, adn, d, knn, symm, weight, sigmo) {
+ctdists = function(data, adn, d, k, symm, weight, sigmo) {
     if (!symm || weight)
-        # with hitting times....
-        return ( hitorct(data, adn, d, knn, FALSE, symm, weight) )
+        # with hitting times...
+        return ( hitorct(data, adn, d, k, FALSE, symm, weight) )
 
     #symmetric unweighted case :
-    prw = params_rw(data,adn,d,knn,TRUE)
+    prw = params_rw(data,adn,d,k,TRUE)
     cc = prw$cc ; nbC = max(cc)
     n = nrow(data) ; seqVect = 1:n
     dists = matrix(-1.0,nrow=n,ncol=n)

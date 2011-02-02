@@ -1,4 +1,4 @@
-\name{CL_comparts}
+\name{comparts}
 \alias{checkParts}
 \alias{varInfo}
 \alias{countPart}
@@ -23,7 +23,8 @@
 }
 
 \arguments{
-	\item{P,P_ref,P1,P2}{a partition of some data, as outputs by \code{\link{gtclusts}} ; e.g., \code{(1,1,1,1,2,2,2,2,1,1,3,3,3)}}
+	\item{P,P_ref,P1,P2}{a partition of some data, as outputs by \code{\link{gtclusts}} ;
+    e.g., \code{(1,1,1,1,2,2,2,2,1,1,3,3,3)}}
 }
 
 \details{

@@ -4,12 +4,13 @@
 # method to build a classification object
 learnClassif = function(x, y, method, params) {
     x = as.matrix(x)
+    checkDependP(mclass=method)
 
     #k nearest neighbors
     if (method=="kNN") {
         sdins = standz(x) #use standardized data
         return ( list("type"=method,"x_train"=sdins$data,"y_train"=y,
-                      "meanx"=sdins$mean,"stdevsx"=sdins$stdevs,"knn"=params) )
+                      "meanx"=sdins$mean,"stdevsx"=sdins$stdevs,"kNN"=params) )
     } else
 
     #classification tree
@@ -51,7 +52,7 @@ predictClassif = function(model,newIns) {
 
     if (model$type == "kNN") {
         scIns = t( ( t(newIns) - model$meanx ) / model$stdevsx )
-        clElems = as.integer( knn(train=model$x_train, test=scIns, cl=model$y_train, k=model$knn) )
+        clElems = as.integer( knn(train=model$x_train, test=scIns, cl=model$y_train, k=model$kNN) )
     }
 
     else if (model$type=="ctree") {
@@ -78,15 +79,25 @@ predictClassif = function(model,newIns) {
 ## Parameters optimisation :
 
 #parameters optimization with a "good" test set :
-optimParams_classif = function(x,y,method,knn,trcv) {
+optimParams_classif = function(x,y,method,k,trcv) {
+	checkDependP(mclass=method)
     if (method!="kNN" && method!="SVM") return (0)
 
+	design = c()
+	n = nrow(x)
+	if (n < 10) {
+		design = 1:n
+    	x_test = as.matrix(x[design,])
+		y_test = as.matrix(y[design])
+    }
     #extract training data from x rows :
-    design = xtr_plan2(x,knn,trcv)
+    else {
+		design = xtr_plan2(x,k,trcv)
+		x_test = as.matrix(x[-design,])
+		y_test = as.matrix(y[-design])
+    }
     x_train = as.matrix(x[design,])
-    x_test = as.matrix(x[-design,])
-    y_train = y[design]
-    y_test = y[-design]
+    y_train = as.matrix(y[design])
 
     #optimize the chosen model parameters on these sets :
     res = 0
@@ -99,16 +110,18 @@ optimParams_classif = function(x,y,method,knn,trcv) {
         res[3] = svmParams$best.parameters$epsilon
     }
     else if (method=="kNN") {
-        bestInd=1 ; bestObj = Inf
-        for (j in 1:max(1, min(30, nrow(x_train)%/%10) ) ) {
-            cl = as.integer( knn(train=x_train, test=x_test, cl=y_train, k=knn) )
-            op = sum( (cl - y_test) & 1)
-            if (op < bestObj) {
-                bestInd = j
-                bestObj = op
-            }
-        }
-        res = bestInd
+        bestK=1 ; bestObj = Inf
+        nTR = nrow(x_train)
+        knnTR = getKnn(nTR)
+        for (j in 1:min(30, 2*knnTR, nTR-1) ) {
+			cl = as.integer( knn(train=x_train, test=x_test, cl=y_train, k=j) )
+			op = sum( (cl - y_test) & 1)
+			if (op < bestObj) {
+				bestK = j
+				bestObj = op
+			}
+		}
+		res = bestK
     }
     return (res)
 }

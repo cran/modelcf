@@ -11,3 +11,16 @@ Main function to build a model = fmetam
 
 Main function to validate a model = nfoldcv
 
+
+*******************************************
+
+Main improvements over 2.0 version :
+  - several bug fixes, especially for dimensionality reduction
+  - several mehods added for intrinsic dimensionality estimation
+  - possibility to better fit to the data by learning residuals
+
+
+*******************************************
+
+Acknowledgements :
+This work was supported by the CEA Cadarache. Thanks to Bertrand Iooss, Michel Marques and all the people who helped me - directly or not - to improve the program design.

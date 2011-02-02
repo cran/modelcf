@@ -1,6 +1,7 @@
-\name{Z_modeling}
+\name{modeling}
 \alias{fmetam_1cl}
 \alias{fmetam}
+\alias{fm_resids}
 \alias{nfoldcv}
 \title{Build and validate the functional outputs model}
 
@@ -9,26 +10,36 @@
 
 	\code{fmetam} is the main method to build a model, using clustering and dimensionality reduction.
 
+	\code{fm_resids} will call \code{fmetam} twice, first on basic data and then on residuals for a better fit.
+
 	\code{nfoldcv} builds and tests several models with fixed parameters and ramdomly generated training sets (cross-validation).
 }
 
 \usage{
 	fmetam_1cl(x, y, d, mdim, adnRD, knnRD, linbt, filt, wvar, alpha,
-	knnmin, knnmax, tsoft, thlvl, hdth, mreg, ppts, stred, trcv, verb)
+	kmin, kmax, tsoft, thlvl, hdth, advhr, mreg, ppts, stred, trcv, verb)
 
-	fmetam(x, y, d=0, mclust="CTH", mclass="kNN", redy=TRUE, adnCC=TRUE,
-	knnCC=0, wcl=TRUE, symm=FALSE, weight=TRUE, sigmo=FALSE, alphaCL=1.0,
-	minszcl=30, maxcl=Inf, taus=0.95, Ns=10, tauc=0.95, Nc=10,
-	mdim="linear", adnRD=FALSE, knnRD=0, linbt="PCA", filt="haar",
-	wvar=TRUE, alphaRD=0.5, knnmin=0, knnmax=0, tsoft=0.1, thlvl=0.3,
-	hdth=0, mreg="PPR", ppts=FALSE, stred=TRUE, trcv = 0.7, verb = TRUE)
+	fmetam(x, y, d=0, mclust="CTH", mclass="kNN", redy=FALSE, adnCC="none",
+	knnCC=0, wcl=TRUE, iclusts=rep(0,nrow(y)), symm=TRUE, weight=FALSE, 
+	sigmo=FALSE, minszcl=30, maxcl=Inf, taus=0.8, Ns=10, tauc=0.8, Nc=10,
+	mdim="linear", adnRD="none", knnRD=0, linbt="PCA", filt="haar",
+	wvar=TRUE, alpha=0.5, kmin=0, kmax=0, tsoft=0.1, thlvl=0.3, hdth=2, 
+	advhr=FALSE, mreg="PPR", ppts=FALSE, stred=TRUE, trcv = 0.7, verb = TRUE)
 
-	nfoldcv(x, y, d=0, mclust="CTH", mclass="kNN", redy=TRUE, adnCC=TRUE,
-	knnCC=0, wcl=TRUE, symm=FALSE, weight=TRUE, sigmo=FALSE, alphaCL=1.0,
-	minszcl=30, maxcl=Inf, taus=0.95, Ns=10, tauc=0.95, Nc=10,
-	mdim="linear", adnRD=FALSE, knnRD=0, linbt="PCA", filt="haar",
-	wvar=TRUE, alphaRD=0.5, knnmin=0, knnmax=0, tsoft=0.1, thlvl=0.3,
-	hdth=0, mreg="PPR", ppts=FALSE, stred=TRUE, trcv = 0.7,
+	fm_resids(x, y, d=0, mclust="CTH", mclass="kNN", redy=FALSE, adnCC="none",
+	knnCC=0, wcl=TRUE, iclusts=rep(0,nrow(y)), symm=TRUE, weight=FALSE, 
+	sigmo=FALSE, minszcl=30, maxcl=Inf, taus=0.8, Ns=10, tauc=0.8, Nc=10,
+	mdim1="linear", mdim2="RML", adnRD="none", knnRD=0, linbt="PCA", 
+	filt="haar", wvar=TRUE, alpha=0.5, kmin=0, kmax=0, tsoft=0.1, thlvl=0.3, 
+	hdth=2, advhr=FALSE, mreg1="PPR", mreg2="PPR", ppts=FALSE, stred=TRUE, 
+	trcv = 0.7, verb = TRUE)
+
+	nfoldcv(x, y, d=0, single=TRUE, mclust="CTH", mclass="kNN", redy=FALSE,
+	adnCC="none", knnCC=0, wcl=TRUE, symm=TRUE, weight=FALSE, sigmo=FALSE,
+	minszcl=30, maxcl=Inf, taus=0.8, Ns=10, tauc=0.8, Nc=10,
+	mdim1="linear", mdim2="RML", adnRD="none", knnRD=0, linbt="PCA", filt="haar",
+	wvar=TRUE, alpha=0.5, kmin=0, kmax=0, tsoft=0.1, thlvl=0.3, hdth=2,
+	advhr=FALSE, mreg1="PPR", mreg2="PPR", ppts=FALSE, stred=TRUE, trcv = 0.7,
 	loo = FALSE, nfold=100, nhold=10, verb = TRUE, plotc=TRUE)
 }
 
@@ -37,13 +48,15 @@
 
 	\item{y}{matrix of \code{n} discretized outputs in rows, given as a R matrix or filename. \code{y[i,]} is the i-th D-dimensional output}
 
-	\item{d}{estimated (real) outputs dimensionality (should be far less than \code{D}) ; useful only if one of the following parameters is set: \code{redy},\code{adn},\code{method=="ACP"}}
+	\item{d}{estimated (real) outputs dimensionality (should be far less than \code{D})}
 
-	\item{mdim}{the dimensionality reduction method (to be) used : choice between \dQuote{linear} for orthonormal basis, \dQuote{RML} for Riemannian Manifold Learning, \dQuote{LPcaML} for Local PCA Manifold Learning and \dQuote{GCEM} for Global Coordination of Exponential Maps}
+	\item{single}{boolean telling if the model will be composite (base + residuals)}
 
-	\item{adnRD}{boolean for adapted point-varying neighborhoods in dimensionality reduction, from Wang et al. article ; in short, the more linear data is around \code{x}, the more \code{x} has neighbors}
+	\item{mdim, mdim1, mdim2}{the dimensionality reduction method (to be) used for base model (1) or residuals (2) : choice between \dQuote{linear} for orthonormal basis, \dQuote{RML} for Riemannian Manifold Learning, \dQuote{LPcaML} for Local PCA Manifold Learning and \dQuote{GCEM} for Global Coordination of Exponential Maps}
 
-	\item{knnRD}{fixed number of neighbors at each point for dimensionality reduction (used only if \code{adnRD==FALSE}). If zero, a simple heuristic will determine it around \code{sqrt(nrow(data))}}
+	\item{adnRD}{string for adapted point-varying neighborhoods in dimensionality reduction. "none" for no adaptivity, "adbas" for simple local PCA based neighborhoods (see code), "ad1" for the Zhan et al. method, and "ad2" for Wang et al. method. In short, the more linear data is around \code{x}, the more \code{x} has neighbors}
+
+	\item{knnRD}{fixed number of neighbors at each point for dimensionality reduction (used only if \code{adnRD=="none"}). If zero, a simple heuristic will determine it around \code{sqrt(nrow(data))}. Irrelevant if \code{mdim=="RML"}}
 
 	\item{linbt}{the type of (linear) orthonormal basis ; \dQuote{PCA} for functional PCA, \dQuote{wav} for wavelets basis, \dQuote{four} for Fourier basis and \dQuote{bsp} for B-spline basis}
 
@@ -51,11 +64,11 @@
 
 	\item{wvar}{boolean telling if we should select the sub-basis with most variable coefficients}
 
-	\item{alpha,alphaRD}{fraction of overlapping elements when building the traversal sequence of neighborhoods}
+	\item{alpha}{fraction of overlapping elements when building the traversal sequence of neighborhoods}
 
-	\item{knnmin}{minimum number of neighbors at each point}
+	\item{kmin}{minimum number of neighbors at each point}
 
-	\item{knnmax}{maximum number of neighbors at each point}
+	\item{kmax}{maximum number of neighbors at each point}
 
 	\item{tsoft}{tolerance factor for the visibility graph computation (between 0 and 1 ; should be close to 0)}
 
@@ -63,7 +76,9 @@
 
 	\item{hdth}{\dQuote{hard} threshold, same as above parameter but integer. It defines the maximum level of elements in the Dijkstra graph which will be embedded using the initial local basis. If zero, only \code{thlvl} is considered}
 
-	\item{mreg}{regression method to use ; choice between between \dQuote{PPR} (Projection Pursuit Regression), \dQuote{rforest} (random forests), \dQuote{BRT} (boosting of regression trees), \dQuote{kNN, fkNN} (Nadaraya-Watson, after dimensionality reduction or not), \dQuote{lPCA} (local PCA regression, without dimensionality reduction), \dQuote{GP} (gaussian processes), \dQuote{SVR} (Support Vector Regression)}
+	\item{advhr}{if TRUE, the heuristic for RML's last step is based on estimated graph distances from minimal connectivity graph ; if FALSE, the heuristic use euclidian distances}
+
+	\item{mreg, mreg1, mreg2}{regression method to use (1 for base model, 2 for residuals) ; choice between between \dQuote{PPR} (Projection Pursuit Regression), \dQuote{rforest} (random forests), \dQuote{kNN, fkNN} (Nadaraya-Watson, after dimensionality reduction or not), \dQuote{lPCA} (local PCA regression, without dimensionality reduction), \dQuote{GP} (gaussian processes), \dQuote{SVR} (Support Vector Regression)}
 
 	\item{ppts}{TRUE for pointwise regression}
 	
@@ -71,25 +86,25 @@
 	
 	\item{trcv}{fraction of total examples on which a model is trained during cross-validation procedures}
 	
-	\item{mclust}{clustering method, to be chosen between \dQuote{HDC} (k-means based on Hitting Times), \dQuote{CTH} (Commute-Time Hierarchic), \dQuote{CTHC} (Commute-Time CHAMELEON), \dQuote{CTKM} (Commute-Time k-means), \dQuote{specH} (\dQuote{spectral-hierarchical} clustering), \dQuote{specKM} (spectral clustering with k-means), \dQuote{CH} (hierarchical clustering), \dQuote{CHC} (CHAMELEON clustering), \dQuote{PCA} (ACP-k-means from Chiou and Li ; see references), \dQuote{KM} (basic k-means)}
+	\item{mclust}{the clustering method, to be chosen between \dQuote{HDC} (k-means based on Hitting Times), \dQuote{CTH} (Commute-Time Hierarchic), \dQuote{CTKM} (Commute-Time k-means), \dQuote{spec} (spectral clustering), \dQuote{CH} (hierarchical clustering), \dQuote{PCA} (PCA-k-means from Chiou and Li ; see references), \dQuote{KM} (basic k-means)}
 
 	\item{mclass}{type of classifier to use in the prediction accuracy step ; choice between \dQuote{kNN} (k-nearest-neighbors), \dQuote{ctree} (classification tree), \dQuote{RDA} (Regularized Discriminant Analysis), \dQuote{rforest} (random forests), \dQuote{SVM} (Support Vector Machines). Only the first two were intensively tested}
 
 	\item{redy}{boolean telling if the outputs should be reduced (with PCA) as a preprocessing step}
 
-	\item{adnCC}{boolean for adapted point-varying neighborhoods in clustering, from Wang et al. article ; in short, the more linear data is around \code{x}, the more \code{x} has neighbors}
+	\item{adnCC}{same as \code{adnRD} above, for clustering}
 
 	\item{knnCC}{fixed number of neighbors at each point in clustering ; used only if \code{adnCL == FALSE}}
 
 	\item{wcl}{FALSE for disable clustering step ; can be useful for comparison purposes}
+	
+	\item{iclusts}{imposed clustering, like (1,1,2,2,2,1) (if known by user ; used in the \code{fm_resids} method)}
 	
 	\item{symm}{boolean at \code{TRUE} for symmetric similarity matrix (see code. It does not impact much the result}
 
 	\item{weight}{boolean at \code{TRUE} for weighted hitting/commute times, like in the article of Liben-Nowell and Kleinberg}
 
 	\item{sigmo}{boolean at \code{TRUE} for sigmoid commute-time kernel, like in the article of Yen et al.}
-
-	\item{alphaCL}{parameter controlling the relative importance of clusters' connectivity in CHAMELEON clustering ; usual values range from 0.5 to 2}
 
 	\item{minszcl}{minimum size for a cluster. This is interesting to not allow too small clusters for the regression stage ; recommanded values are above 30-50}
 
@@ -146,28 +161,6 @@
 	NOTE: standard deviations cannot be accurate if \code{nfold} parameter is too small. Value around 100 or above is recommended.
 }
 
-\references{
-	J-M. Chiou and P-L. Li, \bold{Functional clustering and identifying substructures of longitudinal data}, in Journal of the Royal Statistical Society 69(4): 679-699, 2007
-
-	A. M. Farahmand, C. Szepesvari and J-Y. Audibert, \bold{Manifold-adaptive dimension estimation}, at 24th International Conference on Machine Learning 227: 265-272, 2007
-
-	G. Karypis, E.-H. Han and V. Kumar, \bold{CHAMELEON: A Hierarchical Clustering Algorithm Using Dynamic Modeling}, in IEEE Computer 32(8): 68-75, 1999
-
-	T. Lin, H. Zha and S. U. Lee, \bold{Riemannian Manifold Learning for Nonlinear Dimensionality Reduction}, at European Conference on Computer Vision, Graz, Austria 9: 44-55, 2006
-
-	D. Liben-Nowell and J. Kleinberg ; \bold{The link-prediction problem for social networks}, in Journal of the American Society for Information Science and Technology 58(7): 1019-1031, 2007
-
-	A. Y. Ng, M. Jordan and Y. Weiss, \bold{On Spectral Clustering: Analysis and an algorithm}, at Advances in Neural Information Processing Systems, Vancouver, BC, Canada 14: 849-856, 2002
-
-	J. Wang, Z. Zhang and H. Zha, \bold{Adaptive Manifold Learning}, in Advances in Neural Information Processing Systems 17: 1473-1480, 2005
-
-	L. Yen, D. Vanvyve, F. Wouters, F. Fouss, M. Verleysen and M. Saerens, \bold{Clustering using a random-walk based distance measure}, at Symposium on Artificial Neural Networks 13: 317-324, Bruges, Belgium, 2005
-
-	L. Yen, F. Fouss, C. Decaestecker, P. Francq and M. Saerens, \bold{Graph nodes clustering with the sigmoid commute-time kernel: A comparative study}, in Data \& Knowledge Engineering 68(3): 338-361, 2009
-
-	Y. Zhan, J. Yin, G. Zhang and En Zhu, \bold{Incremental Manifold Learning Algorithm Using PCA on Overlapping Local Neighborhoods for Dimensionality Reduction}, at  3rd International Symposium on Advances in Computation and Intelligence 5370: 406-415, 2008
-}
-
 \examples{
 	data(datacf)
 	#plot curves of the dataset
@@ -187,8 +180,9 @@
 	plot(1-errs$MSE/errs$pvar, type="l", ylim=c(0,1), ylab="Q2")
 
 	# run cross validation for the second dataset
-	\dontrun{nf = nfoldcv(dataIn,dataOut2,d=3,wcl=FALSE,mdim="linear",plotc=FALSE) #run this instead}
-	nf = nfoldcv(dataIn[1:200,],dataOut2[1:200,],d=3,wcl=FALSE,mdim="linear",nfold=10,plotc=FALSE) #for speed
+	\dontrun{nf = nfoldcv(dataIn,dataOut2,d=3,wcl=FALSE,mdim="linear",plotc=FALSE)}
+	nf = nfoldcv(dataIn[1:200,],dataOut2[1:200,],d=3,wcl=FALSE,mdim1="linear",
+    nfold=10,plotc=FALSE) #for speed
 	# plot MSE +/- standard deviation
 	rg = range(nf$MSE-nf$stMSE,nf$MSE+nf$stMSE)
 	plot(nf$MSE-nf$stMSE,type="l",lwd=3,col=4,ylim=rg); par(new=TRUE)
